@@ -1,8 +1,11 @@
-import tkinter as tk
-from tkinter import messagebox
-import requests
 import threading
 import time
+import tkinter as tk
+from tkinter import messagebox
+
+import requests
+
+import session_manager as sm
 
 BASE_URL = "http://127.0.0.1:5000"  # Адрес API
 
@@ -12,12 +15,29 @@ class ClickerApp:
         self.root.title("Кликер")
         self.session = None
         self.click_count = 0
+        self.synced_clicks = 0
 
         # Основные элементы
         self.main_frame = tk.Frame(self.root)
         self.main_frame.pack(padx=20, pady=20)
 
-        self.create_login_frame()
+        saved_nickname = sm.load_session()
+        if saved_nickname:
+            try:
+                user_info = self._get_user_info(saved_nickname)
+                self.session = {"nickname": saved_nickname}
+                self.click_count = user_info.get("clicks", 0)
+                self.synced_clicks = self.click_count
+                self.create_clicker_frame()
+            except Exception as e:
+                print(f"Ошибка загрузки сессии: {e}")
+                self.create_login_frame()
+        else:
+            self.create_login_frame()
+
+    def _get_user_info(self, tg_nickname):
+        response = requests.get(f"{BASE_URL}/show_user_info/{tg_nickname}")
+        return response.json()
 
     def create_login_frame(self):
         """Создает интерфейс для входа в систему."""
@@ -67,6 +87,10 @@ class ClickerApp:
 
         if response.status_code == 200:
             self.session = {"nickname": nickname}
+            sm.save_session(nickname)
+            user_info = self._get_user_info(nickname)
+            self.click_count = user_info.get("clicks", 0)
+            self.synced_clicks = self.click_count
             self.create_clicker_frame()
         else:
             messagebox.showerror("Ошибка", "Неверный никнейм или пароль")
@@ -75,6 +99,7 @@ class ClickerApp:
         """Обработка выхода пользователя."""
         self.session = None
         self.click_count = 0
+        sm.clear_session()
         self.create_login_frame()
 
     def increment_click(self):
@@ -85,17 +110,17 @@ class ClickerApp:
     def sync_clicks(self):
         """Синхронизация кликов с сервером каждые 5 секунд."""
         while self.session:
-            if self.click_count > 0:
+            if self.synced_clicks != self.click_count:
                 data = {
                     "tg_nickname": self.session.get("nickname"),  # Используем telegram_id из сессии
                     "clicks": self.click_count
                 }
                 response = requests.post(f"{BASE_URL}/sync_clicks", json=data)
 
-                if response.status_code == 200:
-                    self.click_count = 0  # Сбрасываем локальный счетчик после успешной синхронизации
-                else:
+                if not response.status_code == 200:
                     print(f"Ошибка синхронизации кликов: {response.json().get('message')}")
+                else:
+                    self.synced_clicks = self.click_count
             time.sleep(5)
 
 if __name__ == "__main__":

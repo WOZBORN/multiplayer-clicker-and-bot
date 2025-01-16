@@ -118,9 +118,12 @@ class SetNewPassword(Resource):
 
 
 class ShowUserInfo(Resource):
-    def get(self, telegram_id):
+    def get(self, identifier):
         try:
-            user = User.query.filter_by(telegram_id=telegram_id).first()
+            user = User.query.filter(
+                (User.telegram_id == identifier) | (User.tg_nickname == identifier)
+            ).first()
+
             if user:
                 return {
                     'telegram_id': user.telegram_id,
@@ -149,7 +152,7 @@ class SyncClicks(Resource):
 
             user = User.query.filter_by(tg_nickname=tg_nickname).first()
             if user:
-                user.clicks += clicks
+                user.clicks     = clicks
                 db.session.commit()
                 return {'message': 'Клики синхронизированы'}, 200
             return {'message': 'Пользователь не найден'}, 404
@@ -182,6 +185,6 @@ api.add_resource(RegisterUser, '/register_user')
 api.add_resource(LoginUser, '/login_user')
 api.add_resource(ResetPassword, '/reset_password')
 api.add_resource(SetNewPassword, '/set_new_password')
-api.add_resource(ShowUserInfo, '/show_user_info/<string:telegram_id>')
+api.add_resource(ShowUserInfo, '/show_user_info/<string:identifier>')
 api.add_resource(SyncClicks, '/sync_clicks')
 api.add_resource(GetLeaders, '/get_leaders')
