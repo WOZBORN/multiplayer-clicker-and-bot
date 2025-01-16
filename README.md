@@ -33,16 +33,16 @@ ZeroFlask2025/
 ### 1. Клонирование репозитория
 Склонируйте проект с помощью Git:
 ```
-git clone https://github.com/your-repository/ZeroFlask2025.git
-cd ZeroFlask2025
+git clone https://github.com/WOZBORN/multiplayer-clicker-and-bot.git
+cd multiplayer-clicker-and-bot
 ```
 
 ### 2. Создание виртуального окружения
 Создайте виртуальное окружение и активируйте его:
 ```
-python -m venv venv
-source venv/bin/activate      # Для Linux/Mac
-venv\\Scripts\\activate         # Для Windows
+python -m venv .venv
+source .venv/bin/activate      # Для Linux/Mac
+.venv/Scripts/activate         # Для Windows
 ```
 
 ### 3. Установка зависимостей
@@ -52,9 +52,8 @@ pip install -r requirements.txt
 ```
 
 ### 4. Настройка сервера
-В папке `flask_server/` создайте папку `instance/` и добавьте файл `config.py` для конфиденциальных данных:
+В папке `flask_server/` откройте файл `flask_app.py`, там можете отредактировать конфигурацию сервера:
 ```
-# instance/config.py
 SECRET_KEY = 'your_secret_key'
 SQLALCHEMY_DATABASE_URI = 'sqlite:///clicker.db'
 SQLALCHEMY_TRACK_MODIFICATIONS = False
